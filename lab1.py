@@ -4,12 +4,12 @@ import numpy as np
 import math
 import random
 
-# page 89 - triang
+# page
 # тест криволинейной фигурой эллипсом и ниже в главе
-# есть функции более сложных фигур
+# есть функции более сложных фигур (page 59)
 # ручной ввод полигона, случайный полигон
 # 
-#
+# page 64
 # сопряжение окружности: двигать прямую или окружность (или и то и то)
 # проверять возможное отсутствие решений и вообще возможные решения
 # т.е поверять возможно ли вписать дугу в область между прямой и окружностью
@@ -40,6 +40,19 @@ def ellipse(a, b, n=100):
             b * math.sin(p)
         ])
     return np.array(ellipse_pts)
+
+
+def figure(n=100):
+    fig_pts = []
+    t_range = np.linspace(0, 2 * math.pi, num=n)
+    for t in t_range:
+        radius = 2 + math.cos(10.0 * t)
+        angle = t + 0.5 * math.pow(math.sin(10.0 * t), 2)
+        fig_pts.append([
+            radius * math.cos(angle),
+            radius * math.sin(angle)
+        ])
+    return np.array(fig_pts)
 
 
 def striang_signed(a, b, c):
@@ -107,8 +120,8 @@ ax_random_poly.plot(*random_poly_center.transpose(), marker='o', color='r', ls='
 
 
 # ELLIPSE
-ellipse_a = 3
-ellipse_b = 7
+ellipse_a = 7
+ellipse_b = 3
 ellipse_points = ellipse(ellipse_a, ellipse_b, n=1000)
 ellipse_poly_square, ellipse_poly_center = spoly(ellipse_points)
 ellipse_poly_dir = dir_test(ellipse_points)
@@ -122,12 +135,7 @@ ax_ellipse.plot(*ellipse_poly_center.transpose(), marker='o', color='r', ls='')
 
 
 # FIGURE
-figure_polygon_points = np.array([
-    [-3, 0],
-    [0, 3],
-    [3, 0],
-    [0, -3],
-])
+figure_polygon_points = figure(n=1000)
 figure_poly_square, figure_poly_center = spoly(figure_polygon_points)
 figure_poly_dir = dir_test(figure_polygon_points)
 figure_polygon_patch = mpatches.Polygon(figure_polygon_points)
