@@ -31,6 +31,17 @@ def srpoly(center_pt, min_rad, max_rad, min_step_angle, max_step_angle):
     return np.array(poly)
 
 
+def ellipse(a, b, n=100):
+    p_range = np.linspace(0, 2 * math.pi, num=n)
+    ellipse_pts = []
+    for p in p_range:
+        ellipse_pts.append([
+            a * math.cos(p),
+            b * math.sin(p)
+        ])
+    return np.array(ellipse_pts)
+
+
 def striang_signed(a, b, c):
     det = (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])
     return det / 2
@@ -96,17 +107,15 @@ ax_random_poly.plot(*random_poly_center.transpose(), marker='o', color='r', ls='
 
 
 # ELLIPSE
-ellipse_points = np.array([
-    [-3, 0],
-    [0, 3],
-    [3, 0],
-    [0, -3],
-])
+ellipse_a = 3
+ellipse_b = 7
+ellipse_points = ellipse(ellipse_a, ellipse_b, n=1000)
 ellipse_poly_square, ellipse_poly_center = spoly(ellipse_points)
 ellipse_poly_dir = dir_test(ellipse_points)
+ellipse_square = math.pi * ellipse_a * ellipse_b
 ellipse_polygon_patch = mpatches.Polygon(ellipse_points)
 ax_ellipse.set_title('Ellipse')
-ax_ellipse.set_xlabel('S={:.4f} S\'={:.4f} dir={:.0f}'.format(ellipse_poly_square, 42, ellipse_poly_dir))
+ax_ellipse.set_xlabel('S={:.4f} S\'={:.4f} dir={:.0f}'.format(ellipse_poly_square, ellipse_square, ellipse_poly_dir))
 ax_ellipse.set_aspect('equal')
 ax_ellipse.add_patch(ellipse_polygon_patch)
 ax_ellipse.plot(*ellipse_poly_center.transpose(), marker='o', color='r', ls='')
