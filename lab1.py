@@ -56,6 +56,8 @@ def dir_test(poly):
         square += striang_signed(poly[0], poly[i], poly[i + 1])
     return np.sign(square)
 
+# Utility functions
+
 poly_points = srpoly(np.array([5, 7]), 1, 7, math.radians(10), math.radians(30))
 square, center = spoly(poly_points)
 dir = dir_test(poly_points)
@@ -63,13 +65,75 @@ dir = dir_test(poly_points)
 print(square)
 print(dir)
 
-fig, ax = plt.subplots()
 
-polygon = mpatches.Polygon(poly_points)
-ax.add_patch(polygon)
-ax.plot(*poly_points.transpose(), marker='o', color='r', ls='')
-ax.plot(*center.transpose(), marker='o', color='y', ls='')
-ax.plot(*np.array([5, 7]).transpose(), marker='o', color='b', ls='')
+# PLOTTING
 
-# fig.savefig("test.png")
+fig, ((ax_static_poly, ax_random_poly), (ax_ellipse, ax_figure)) = plt.subplots(2, 2,
+                                                                                sharex=False, sharey=False,
+                                                                                num=None, figsize=(10, 10), dpi=110
+                                                                                )
+fig.canvas.set_window_title('CG lab 1')
+
+
+# STATIC POLYGON
+static_polygon_points = np.array([
+    [-3, 0],
+    [0, 3],
+    [3, 0],
+    [0, -3],
+])
+static_poly_square, static_poly_center = spoly(static_polygon_points)
+static_polygon_patch = mpatches.Polygon(static_polygon_points)
+ax_static_poly.set_title('Manual')
+ax_static_poly.set_xlabel('S={:.4f}'.format(static_poly_square))
+ax_static_poly.set_aspect('equal')
+ax_static_poly.add_patch(static_polygon_patch)
+ax_static_poly.plot(*static_poly_center.transpose(), marker='o', color='r', ls='')
+
+
+# RANDOM POLYGON
+random_polygon_points = srpoly(np.array([0, 0]), 1, 7, math.radians(10), math.radians(30))
+random_poly_square, random_poly_center = spoly(random_polygon_points)
+random_polygon_patch = mpatches.Polygon(random_polygon_points)
+ax_random_poly.set_title('Random polygon')
+ax_random_poly.set_xlabel('S={:.4f}'.format(random_poly_square))
+ax_random_poly.set_aspect('equal')
+ax_random_poly.add_patch(random_polygon_patch)
+ax_random_poly.plot(*random_poly_center.transpose(), marker='o', color='r', ls='')
+
+
+# ELLIPSE
+ellipse_points = np.array([
+    [-3, 0],
+    [0, 3],
+    [3, 0],
+    [0, -3],
+])
+ellipse_poly_square, ellipse_poly_center = spoly(ellipse_points)
+ellipse_polygon_patch = mpatches.Polygon(ellipse_points)
+ax_ellipse.set_title('Ellipse')
+ax_ellipse.set_xlabel('S={:.4f} S\'={:.4f}'.format(ellipse_poly_square, 42))
+ax_ellipse.set_aspect('equal')
+ax_ellipse.add_patch(ellipse_polygon_patch)
+ax_ellipse.plot(*ellipse_poly_center.transpose(), marker='o', color='r', ls='')
+
+
+# FIGURE
+figure_polygon_points = np.array([
+    [-3, 0],
+    [0, 3],
+    [3, 0],
+    [0, -3],
+])
+figure_poly_square, figure_poly_center = spoly(figure_polygon_points)
+figure_polygon_patch = mpatches.Polygon(figure_polygon_points)
+ax_figure.set_title('Figure')
+ax_figure.set_xlabel('S={:.4f} S\'={:.4f}'.format(figure_poly_square, 42))
+ax_figure.set_aspect('equal')
+ax_figure.add_patch(figure_polygon_patch)
+ax_figure.plot(*figure_poly_center.transpose(), marker='o', color='r', ls='')
+
+
+# Draw
+fig.tight_layout()
 plt.show()
