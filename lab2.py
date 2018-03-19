@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 import numpy as np
 import math
-from shapely.geometry import LineString, LinearRing, MultiLineString
+from shapely.geometry import LineString, LinearRing, MultiLineString, Point
 
 # page
 # тест криволинейной фигурой эллипсом и ниже в главе
@@ -13,6 +13,29 @@ from shapely.geometry import LineString, LinearRing, MultiLineString
 # сопряжение окружности: двигать прямую или окружность (или и то и то)
 # проверять возможное отсутствие решений и вообще возможные решения
 # т.е поверять возможно ли вписать дугу в область между прямой и окружностью
+
+
+def len_vec(vec):
+    return math.sqrt(vec[0] ** 2 + vec[1] ** 2)
+
+
+def angle_vec(vec1, vec2):
+    return math.acos(
+        (vec1[0] * vec2[0] + vec1[1] * vec2[1])
+        /
+        (len_vec(vec1) * len_vec(vec2))
+    )
+
+
+def arc(center, radius, ang1, ang2, n=100):
+    p_range = np.linspace(ang1, ang2, num=n)
+    arc_pts = []
+    for p in p_range:
+        arc_pts.append([
+            center[0] + radius * math.cos(p),
+            center[1] + radius * math.sin(p)
+        ])
+    return np.array(arc_pts)
 
 
 def circle(center, radius, n=100):
@@ -58,6 +81,7 @@ ax_arcR = plt.axes([0.6, 0.9, 0.3, 0.04])
 sl_arcR = Slider(ax_arcR, 'Arc R', 1, 10, valinit=arc_R)
 
 shape_circle = LinearRing(circle(circle_center, circle_R - arc_R))
+shape_circle_main = LinearRing(circle(circle_center, circle_R))
 
 pt_A = np.array([0, 0])
 pt_B = np.array([1, 1])
@@ -81,6 +105,16 @@ shape_line_right = shape_line.parallel_offset(arc_R, 'right')
 
 lines_intersect, = ax.plot([], marker='o', color='r', ls='')
 
+
+def build_arc(center, radius, pt1, pt2):
+    sh_pt1 = Point(pt1)
+    sh_pt2 = Point(pt2)
+    dist = sh_pt1.distance(sh_pt2)
+    sh_arc_circle = LinearRing(circle(center, radius))
+    arc = sh_arc_circle.intersection(LinearRing(circle(pt1, dist)).intersection(LinearRing(circle(pt2, dist))))
+    return np.array(arc.geoms[0].coords)
+
+
 def update(v):
     global circle_points
     global circle_R, arc_R
@@ -94,6 +128,7 @@ def update(v):
     lines_circle.set_data(*circle_points.transpose())
     fig.canvas.draw_idle()
     shape_circle.coords = circle(circle_center, circle_R - arc_R)
+    shape_circle_main.coords = circle(circle_center, circle_R)
     # Update lines
     pt_A[0] = sl_lineAx.val
     pt_A[1] = sl_lineAy.val
@@ -106,13 +141,26 @@ def update(v):
     shape_line_left = shape_line.parallel_offset(arc_R, 'left')
     shape_line_right = shape_line.parallel_offset(arc_R, 'right')
     # Calculate intersections
-    intersection = shape_circle.intersection(MultiLineString([shape_line_left, shape_line_right]))
+    if arc_R >= circle_R:
+        print("Impossible")
+        lines_intersect.set_data([], [])
+        return
+    # d = shape_line.distance(Point(circle_center))
+    # if d > circle_R - 2 * arc_R:
+    #     print("Impossible 2")
+    #     lines_intersect.set_data([], [])
+    #     return
+    intersection = list(shape_circle.intersection(MultiLineString([shape_line_left, shape_line_right])))
     inter_coords = []
-    for pt in list(intersection):
-        inter_coords.append(pt.coords)
+    print("N of intersections {}".format(len(intersection)))
+    for pt in intersection:
+        arc_ctr = np.array(list(pt.coords)[0])
+        arc_pts = arc(circle_center - arc_ctr, arc_R, angle_vec(arc_ctr, np.array([1, 0])), math.radians(-30), n=50)
+
+        inter_coords = inter_coords + [arc_pts]
     if len(inter_coords):
-        print('intersect')
         lines_intersect.set_data(*np.array(inter_coords).transpose())
+
 
 sl_circleR.on_changed(update)
 sl_arcR.on_changed(update)
