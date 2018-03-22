@@ -15,20 +15,41 @@ from shapely.geometry import LineString, LinearRing, MultiLineString, Point
 # т.е поверять возможно ли вписать дугу в область между прямой и окружностью
 
 
+def r_rot(v):
+    return np.array([v[1], -v[0]])
+
+
+def arg(vec):
+    r = math.acos(vec[0] / len_vec(vec))
+    if vec[1] >= 0:
+        return r
+    else:
+        return -r
+
+
+def ang(V, W):
+    det = V[0] * W[1] - V[1] * W[0]
+    r = math.acos(
+        (V[0] * W[0] + V[1] * W[1])
+        /
+        (len_vec(V) * len_vec(W))
+    )
+    if det >= 0:
+        return r
+    else:
+        return -r
+
+
+def scalprod(v, w):
+    return v[0] * w[0] + v[1] * w[1]
+
+
 def len_vec(vec):
     return math.sqrt(vec[0] ** 2 + vec[1] ** 2)
 
 
-def angle_vec(vec1, vec2):
-    return math.acos(
-        (vec1[0] * vec2[0] + vec1[1] * vec2[1])
-        /
-        (len_vec(vec1) * len_vec(vec2))
-    )
-
-
 def arc(center, radius, ang1, ang2, n=100):
-    p_range = np.linspace(ang1, ang2, num=n)
+    p_range = np.linspace(ang1, ang1 + ang2, num=n)
     arc_pts = []
     for p in p_range:
         arc_pts.append([
@@ -106,15 +127,6 @@ shape_line_right = shape_line.parallel_offset(arc_R, 'right')
 lines_intersect, = ax.plot([], marker='o', color='r', ls='')
 
 
-def build_arc(center, radius, pt1, pt2):
-    sh_pt1 = Point(pt1)
-    sh_pt2 = Point(pt2)
-    dist = sh_pt1.distance(sh_pt2)
-    sh_arc_circle = LinearRing(circle(center, radius))
-    arc = sh_arc_circle.intersection(LinearRing(circle(pt1, dist)).intersection(LinearRing(circle(pt2, dist))))
-    return np.array(arc.geoms[0].coords)
-
-
 def update(v):
     global circle_points
     global circle_R, arc_R
@@ -145,17 +157,15 @@ def update(v):
         print("Impossible")
         lines_intersect.set_data([], [])
         return
-    # d = shape_line.distance(Point(circle_center))
-    # if d > circle_R - 2 * arc_R:
-    #     print("Impossible 2")
-    #     lines_intersect.set_data([], [])
-    #     return
+
     intersection = list(shape_circle.intersection(MultiLineString([shape_line_left, shape_line_right])))
     inter_coords = []
     print("N of intersections {}".format(len(intersection)))
     for pt in intersection:
         arc_ctr = np.array(list(pt.coords)[0])
-        arc_pts = arc(circle_center - arc_ctr, arc_R, angle_vec(arc_ctr, np.array([1, 0])), math.radians(-30), n=50)
+        N = r_rot(pt_B - pt_A)
+        q = pt_B - pt_A
+        arc_pts = arc(arc_ctr, arc_R, arg(arc_ctr), ang(arc_ctr, scalprod(q - arc_ctr, N) * N), n=50)
 
         inter_coords = inter_coords + [arc_pts]
     if len(inter_coords):
