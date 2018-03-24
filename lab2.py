@@ -71,10 +71,16 @@ def circle(center, radius, n=100):
 
 
 def line(A, B, min_X, max_X):
-    pts = np.array([
-        [min_X, (min_X * (A[1] - B[1]) + (A[0] * B[1] - B[0] * A[1])) / (A[0] - B[0])],
-        [max_X, (max_X * (A[1] - B[1]) + (A[0] * B[1] - B[0] * A[1])) / (A[0] - B[0])]
-    ])
+    if abs(A[0] - B[0]) < 0.05:
+        pts = np.array([
+            [A[0], -12],
+            [A[0], 12]
+        ])
+    else:
+        pts = np.array([
+            [min_X, (min_X * (A[1] - B[1]) + (A[0] * B[1] - B[0] * A[1])) / (A[0] - B[0])],
+            [max_X, (max_X * (A[1] - B[1]) + (A[0] * B[1] - B[0] * A[1])) / (A[0] - B[0])]
+        ])
     return pts
 
 
@@ -83,8 +89,6 @@ fig, ax = plt.subplots(figsize=(10, 10), dpi=110)
 fig.canvas.set_window_title('CG lab 2')
 plt.subplots_adjust(top=0.85, bottom=0.25)
 plt.axis([-12, 12, -12, 12])
-
-#ax = plt.axes([0, 0.25, 0.65, 1])
 
 arc_R = 3
 
@@ -104,8 +108,8 @@ sl_arcR = Slider(ax_arcR, 'Arc R', 1, 10, valinit=arc_R)
 shape_circle = LinearRing(circle(circle_center, circle_R - arc_R))
 shape_circle_main = LinearRing(circle(circle_center, circle_R))
 
-pt_A = np.array([0, 0])
-pt_B = np.array([1, 1])
+pt_A = np.array([0.0, 0.0])
+pt_B = np.array([1.0, 1.0])
 line_points = line(pt_A, pt_B, -12, 12)
 lines_line, = ax.plot(*line_points.transpose())
 
@@ -114,7 +118,7 @@ ax_lineAy = plt.axes([0.2, 0.05, 0.3, 0.04])
 ax_lineBx = plt.axes([0.6, 0.12, 0.3, 0.04])
 ax_lineBy = plt.axes([0.6, 0.05, 0.3, 0.04])
 
-sl_lineAx = Slider(ax_lineAx, 'Ax', -10, 10, valinit=pt_A[0])
+sl_lineAx = Slider(ax_lineAx, 'Ax', -10, 10, valinit=pt_A[0], )
 sl_lineAy = Slider(ax_lineAy, 'Ay', -10, 10, valinit=pt_A[1])
 sl_lineBx = Slider(ax_lineBx, 'Bx', -10, 10, valinit=pt_B[0])
 sl_lineBy = Slider(ax_lineBy, 'By', -10, 10, valinit=pt_B[1])
@@ -124,7 +128,15 @@ shape_line = LineString(line_points)
 shape_line_left = shape_line.parallel_offset(arc_R, 'left')
 shape_line_right = shape_line.parallel_offset(arc_R, 'right')
 
-lines_intersect, = ax.plot([], marker='o', color='r', ls='')
+lines_intersect = []
+for i in range(0, 5):
+    lines, = ax.plot([])
+    lines_intersect.append(lines)
+
+
+def clear():
+    for i in range(0, 5):
+        lines_intersect[i].set_data([], [])
 
 
 def update(v):
@@ -153,23 +165,23 @@ def update(v):
     shape_line_left = shape_line.parallel_offset(arc_R, 'left')
     shape_line_right = shape_line.parallel_offset(arc_R, 'right')
     # Calculate intersections
+    clear()
     if arc_R >= circle_R:
         print("Impossible")
-        lines_intersect.set_data([], [])
         return
-
     intersection = list(shape_circle.intersection(MultiLineString([shape_line_left, shape_line_right])))
-    inter_coords = []
+    if len(intersection) > 4 or len(intersection) <=0:
+        print("Impossible")
+        return
     print("N of intersections {}".format(len(intersection)))
+    arc_i = 0
     for pt in intersection:
         arc_ctr = np.array(list(pt.coords)[0])
-        N = r_rot(pt_B - pt_A)
         q = pt_B - pt_A
-        arc_pts = arc(arc_ctr, arc_R, arg(arc_ctr), ang(arc_ctr, scalprod(q - arc_ctr, N) * N), n=50)
-
-        inter_coords = inter_coords + [arc_pts]
-    if len(inter_coords):
-        lines_intersect.set_data(*np.array(inter_coords).transpose())
+        N = r_rot(q)
+        arc_pts = arc(arc_ctr, arc_R, arg(arc_ctr - circle_center), ang(arc_ctr - circle_center, scalprod(q - (arc_ctr - circle_center), N) * N), n=50)
+        lines_intersect[arc_i].set_data(*np.array(arc_pts).transpose())
+        arc_i += 1
 
 
 sl_circleR.on_changed(update)
