@@ -3,6 +3,7 @@ from matplotlib.widgets import Slider
 import numpy as np
 import math
 from shapely.geometry import LineString, LinearRing, MultiLineString, Point
+import matplotlib.patches as patches
 
 # page
 # тест криволинейной фигурой эллипсом и ниже в главе
@@ -128,6 +129,14 @@ shape_line = LineString(line_points)
 shape_line_left = shape_line.parallel_offset(arc_R, 'left')
 shape_line_right = shape_line.parallel_offset(arc_R, 'right')
 
+style = "Simple,tail_width=0.5,head_width=4,head_length=8"
+kw = dict(arrowstyle=style, color="k", lw=2)
+arrows = []
+for i in range(0, 9):
+    arrows.append(patches.FancyArrowPatch([0, 0], [0, 0], **kw))
+    ax.add_patch(arrows[i])
+
+
 lines_intersect = []
 for i in range(0, 5):
     lines, = ax.plot([])
@@ -137,6 +146,10 @@ for i in range(0, 5):
 def clear():
     for i in range(0, 5):
         lines_intersect[i].set_data([], [])
+
+
+def norm(v):
+    return v / len_vec(v) * 4
 
 
 def update(v):
@@ -175,12 +188,21 @@ def update(v):
         return
     print("N of intersections {}".format(len(intersection)))
     arc_i = 0
+    arr_i = 0
     for pt in intersection:
         arc_ctr = np.array(list(pt.coords)[0])
         q = pt_B - pt_A
         N = r_rot(q)
-        arc_pts = arc(arc_ctr, arc_R, arg(arc_ctr - circle_center), ang(arc_ctr - circle_center, scalprod(q - (arc_ctr - circle_center), N) * N), n=50)
+        alpha = arg(arc_ctr - circle_center)
+        beta = ang(arc_ctr - circle_center, scalprod(pt_B - arc_ctr, N) * N)
+        arc_pts = arc(arc_ctr, arc_R, alpha, beta, n=50)
         lines_intersect[arc_i].set_data(*np.array(arc_pts).transpose())
+        head = arc_ctr
+        tail = head + norm(arc_ctr - circle_center)
+        tail2 = head + norm(scalprod(pt_B - arc_ctr, N) * N)
+        #arrows[arr_i].set_positions(head, tail)
+        #arrows[arr_i + 1].set_positions(head, tail2)
+        arr_i += 2
         arc_i += 1
 
 
